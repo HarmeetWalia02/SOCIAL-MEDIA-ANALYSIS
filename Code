@@ -1,0 +1,452 @@
+CREATE TABLE users (
+user_id INTEGER AUTO_INCREMENT PRIMARY KEY,
+username VARCHAR(255) UNIQUE NOT NULL,
+profile_photo_url VARCHAR(255) DEFAULT 'https://picsum.photos/100',
+bio VARCHAR(255),
+created_at TIMESTAMP DEFAULT NOW()
+);
+ALTER TABLE users
+ADD email VARCHAR(30) NOT NULL;
+CREATE TABLE photos (
+photo_id INTEGER AUTO_INCREMENT PRIMARY KEY,
+photo_url VARCHAR(255) NOT NULL UNIQUE,
+post_id INTEGER NOT NULL,
+created_at TIMESTAMP DEFAULT NOW(),
+size FLOAT CHECK (size<5)
+);
+CREATE TABLE videos (
+video_id INTEGER AUTO_INCREMENT PRIMARY KEY,
+video_url VARCHAR(255) NOT NULL UNIQUE,
+post_id INTEGER NOT NULL,
+created_at TIMESTAMP DEFAULT NOW(),
+size FLOAT CHECK (size<10)
+);
+CREATE TABLE post (
+post_id INTEGER AUTO_INCREMENT PRIMARY KEY,
+photo_id INTEGER,
+25
+video_id INTEGER,
+user_id INTEGER NOT NULL,
+caption VARCHAR(200),
+location VARCHAR(50) ,
+created_at TIMESTAMP DEFAULT NOW(),
+FOREIGN KEY(user_id) REFERENCES users(user_id),
+FOREIGN KEY(photo_id) REFERENCES photos(photo_id),
+FOREIGN KEY(video_id) REFERENCES videos(video_id)
+);
+CREATE TABLE comments (
+comment_id INTEGER AUTO_INCREMENT PRIMARY KEY,
+comment_text VARCHAR(255) NOT NULL,
+post_id INTEGER NOT NULL,
+user_id INTEGER NOT NULL,
+created_at TIMESTAMP DEFAULT NOW(),
+FOREIGN KEY(post_id) REFERENCES post(post_id),
+FOREIGN KEY(user_id) REFERENCES users(user_id)
+);
+CREATE TABLE post_likes (
+user_id INTEGER NOT NULL,
+post_id INTEGER NOT NULL,
+created_at TIMESTAMP DEFAULT NOW(),
+FOREIGN KEY(user_id) REFERENCES users(user_id),
+FOREIGN KEY(post_id) REFERENCES post(post_id),
+PRIMARY KEY(user_id, post_id)
+);
+CREATE TABLE comment_likes (
+user_id INTEGER NOT NULL,
+comment_id INTEGER NOT NULL,
+created_at TIMESTAMP DEFAULT NOW(),
+FOREIGN KEY(user_id) REFERENCES users(user_id),
+FOREIGN KEY(comment_id) REFERENCES comments(comment_id),
+PRIMARY KEY(user_id, comment_id)
+);
+CREATE TABLE follows (
+26
+follower_id INTEGER NOT NULL,
+followee_id INTEGER NOT NULL,
+created_at TIMESTAMP DEFAULT NOW(),
+FOREIGN KEY(follower_id) REFERENCES users(user_id),
+FOREIGN KEY(followee_id) REFERENCES users(user_id),
+PRIMARY KEY(follower_id, followee_id)
+);
+CREATE TABLE hashtags (
+hashtag_id INTEGER AUTO_INCREMENT PRIMARY KEY,
+hashtag_name VARCHAR(255) UNIQUE,
+created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE TABLE hashtag_follow (
+user_id INTEGER NOT NULL,
+hashtag_id INTEGER NOT NULL,
+created_at TIMESTAMP DEFAULT NOW(),
+FOREIGN KEY(user_id) REFERENCES users(user_id),
+FOREIGN KEY(hashtag_id) REFERENCES hashtags(hashtag_id),
+PRIMARY KEY(user_id, hashtag_id)
+);
+CREATE TABLE bookmarks (
+post_id INTEGER NOT NULL,
+user_id INTEGER NOT NULL,
+created_at TIMESTAMP DEFAULT NOW(),
+FOREIGN KEY(post_id) REFERENCES post(post_id),
+FOREIGN KEY(user_id) REFERENCES users(user_id),
+PRIMARY KEY(user_id, post_id)
+);
+CREATE TABLE login (
+login_id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
+user_id INTEGER NOT NULL,
+ip VARCHAR(50) NOT NULL,
+login_time TIMESTAMP NOT NULL DEFAULT NOW(),
+FOREIGN KEY(user_id) REFERENCES users(user_id)
+);
+27
+Working with Data Manipulation commands:
+1. Inserting into bookmarks
+INSERT INTO bookmarks(post_id, user_id) VALUE (8, 6);
+INSERT INTO bookmarks(post_id, user_id) VALUE (92, 40);
+INSERT INTO bookmarks(post_id, user_id) VALUE (23, 35);
+2. Inserting into posts
+INSERT into post (post_id,photo_id,video_id,user_id,caption,location) values
+(1,15,3,24,'HEY!!','VHA JHA KOI AATA JAATA NI'),
+(2,21,47,28,'Live a good story.','The Red Fort, Delhi.'),
+(3,45,6,37,'Escape the ordinary.','The Taj Mahal, Agra.'),
+3. Inserting into comments
+INSERT INTO COMMENTS(comment_text ,post_id,user_id) VALUES ('great man',26,6);
+INSERT INTO COMMENTS(comment_text ,post_id,user_id) VALUES ('looking greate bhai',12,17);
+INSERT INTO COMMENTS(comment_text ,post_id,user_id) VALUES ('nice place keep enjoying',29,15);
+INSERT INTO COMMENTS(comment_text ,post_id,user_id) VALUES ('great bhai meetu soon ',49,21);
+4. Inserting into follows
+INSERT INTO follows(follower_id, followee_id) VALUES (45, 38);
+INSERT INTO follows(follower_id, followee_id) VALUES (46, 2);
+INSERT INTO follows(follower_id, followee_id) VALUES (21, 9);
+5. Inserting into users
+INSERT INTO users(username, profile_photo_url, bio,email) VALUES
+('Sakshi Warandani' ,
+"https://vader.news/__export/1612817390103/sites/gadgets/img/2021/02/08/ian_somerha
+lder_vampires.jpg_246448593.jpg" , "NITJ wish me on 23
+jan",'deepak@24sevenindia.com'),
+("Omnicron Larson", "/sdfvsdf", "Heart Stealer",'101cartinfo@gmail.com'),
+("dettol sharma", "/sdfvsdf", "Dettol Stealer",'the.yellow.gold@gmail.com'),
+('sunil' , '/yisadf324//' , 'hotel manageemnt ','deepak@24sevenindia.com');
+28
+Frontend and DB Connection Code:
+import "@mui/material";
+import "react-icons";
+import "react-icons/bi";
+import "react-icons/md";
+import "react-icons/bs";
+import "react-router-dom";
+import { CssBaseline } from "@mui/material";
+import { ThemeProvider } from "@mui/material/styles";
+import {
+BrowserRouter,
+Route,
+Routes,
+useParams,
+useSearchParams,
+} from "react-router-dom";
+import theme from "./theme";
+import PostView from "./components/views/PostView";
+import CreatePostView from "./components/views/CreatePostView";
+import ProfileView from "./components/views/ProfileView";
+import LoginView from "./components/views/LoginView";
+import SignupView from "./components/views/SignupView";
+import ExploreView from "./components/views/ExploreView";
+import PrivateRoute from "./components/PrivateRoute";
+import SearchView from "./components/views/SearchView";
+import MessengerView from "./components/views/MessengerView";
+import { initiateSocketConnection, socket } from "./helpers/socketHelper";
+import { useEffect } from "react";
+import { BASE_URL } from "./config";
+import { io } from "socket.io-client";
+function App() {
+initiateSocketConnection();
+return (
+<ThemeProvider theme={theme}>
+<BrowserRouter>
+<CssBaseline />
+<Routes>
+<Route path="/" element={<ExploreView />} />
+29
+<Route path="/posts/:id" element={<PostView />} />
+<Route
+path="/posts/create"
+element={
+<PrivateRoute>
+<CreatePostView />
+</PrivateRoute>
+}
+/>
+<Route
+path="/messenger"
+element={
+<PrivateRoute>
+<MessengerView />
+</PrivateRoute>
+}
+/>
+<Route path="/search" element={<SearchView />} />
+<Route path="/users/:id" element={<ProfileView />} />
+<Route path="/login" element={<LoginView />} />
+<Route path="/signup" element={<SignupView />} />
+</Routes>
+</BrowserRouter>
+</ThemeProvider>
+);
+}
+export default App;
+DATABASE CONNECTION
+const mongoose = require("mongoose");
+const filter = require("../util/filter");
+const PostLike = require("./PostLike");
+const PostSchema = new mongoose.Schema(
+{
+poster: {
+type: mongoose.Types.ObjectId,
+ref: "user",
+required: true,
+},
+30
+title: {
+type: String,
+required: true,
+maxLength: [80, "Must be no more than 80 characters"],
+},
+content: {
+type: String,
+required: true,
+maxLength: [8000, "Must be no more than 8000 characters"],
+},
+likeCount: {
+type: Number,
+default: 0,
+},
+commentCount: {
+type: Number,
+default: 0,
+},
+edited: {
+type: Boolean,
+default: false,
+},
+},
+{ timestamps: true }
+);
+PostSchema.pre("save", function (next) {
+if (this.title.length > 0) {
+this.title = filter.clean(this.title);
+}
+if (this.content.length > 0) {
+this.content = filter.clean(this.content);
+}
+next();
+});
+PostSchema.pre("remove", async function (next) {
+console.log(this._id);
+await PostLike.deleteMany({ postId: this._id });
+next();
+});
+31
+module.exports = mongoose.model("post", PostSchema);
+POST API CALLS
+import { BASE_URL } from "../config";
+const getUserLikedPosts = async (likerId, token, query) => {
+try {
+const res = await fetch(
+BASE_URL +
+"api/posts/liked/" +
+likerId +
+"?" +
+new URLSearchParams(query),
+{
+headers: {
+"x-access-token": token,
+},
+}
+);
+return await res.json();
+} catch (err) {
+console.log(err);
+}
+};
+const getPosts = async (token, query) => {
+try {
+const res = await fetch(
+BASE_URL + "api/posts?" + new URLSearchParams(query),
+{
+headers: {
+"x-access-token": token,
+},
+}
+);
+return await res.json();
+} catch (err) {
+console.log(err);
+}
+};
+32
+const getPost = async (postId, token) => {
+try {
+headers: {
+"x-access-token": token,
+},
+});
+return await res.json();
+} catch (err) {
+console.log(err);
+const res = await fetch(BASE_URL + "api/posts/" + postId, {
+}
+};
+const getUserLikes = async (postId, anchor) => {
+try {
+const res = await fetch(
+BASE_URL +
+"api/posts/like/" +
+postId +
+"/users?" +
+new URLSearchParams({
+anchor,
+})
+);
+return await res.json();
+} catch (err) {
+console.log(err);
+}
+};
+const createPost = async (post, user) => {
+try {
+const res = await fetch(BASE_URL + "api/posts", {
+method: "POST",
+headers: {
+Accept: "application/json",
+"Content-Type": "application/json",
+"x-access-token": user.token,
+},
+body: JSON.stringify(post),
+});
+return await res.json();
+33
+} catch (err) {
+console.log(err);
+}
+};
+const updatePost = async (postId, user, data) => {
+try {
+const res = await fetch(BASE_URL + "api/posts/" + postId, {
+method: "PATCH",
+headers: {
+Accept: "application/json",
+"Content-Type": "application/json",
+"x-access-token": user.token,
+},
+body: JSON.stringify(data),
+});
+return res.json();
+} catch (err) {
+console.log(err);
+}
+};
+const deletePost = async (postId, user) => {
+try {
+const res = await fetch(BASE_URL + "api/posts/" + postId, {
+method: "DELETE",
+headers: {
+"x-access-token": user.token,
+},
+});
+return res.json();
+} catch (err) {
+console.log(err);
+}
+};
+const getComments = async (params) => {
+try {
+const { id } = params;
+const res = await fetch(BASE_URL + "api/comments/post/" + id);
+return res.json();
+} catch (err) {
+console.log(err);
+}
+34
+};
+const getUserComments = async (params) => {
+try {
+const { id, query } = params;
+const res = await fetch(
+BASE_URL + "api/comments/user/" + id + "?" + new URLSearchParams(query)
+);
+return res.json();
+} catch (err) {
+console.log(err);
+}
+};
+const createComment = async (comment, params, user) => {
+try {
+const { id } = params;
+const res = await fetch(BASE_URL + "api/comments/" + id, {
+method: "POST",
+headers: {
+Accept: "application/json",
+"Content-Type": "application/json",
+"x-access-token": user.token,
+},
+body: JSON.stringify(comment),
+});
+return res.json();
+} catch (err) {
+console.log(err);
+}
+};
+const updateComment = async (commentId, user, data) => {
+try {
+const res = await fetch(BASE_URL + "api/comments/" + commentId, {
+method: "PATCH",
+headers: {
+Accept: "application/json",
+"Content-Type": "application/json",
+"x-access-token": user.token,
+},
+body: JSON.stringify(data),
+});
+return res.json();
+} catch (err) {
+35
+console.log(err);
+}
+};
+const deleteComment = async (commentId, user) => {
+try {
+const res = await fetch(BASE_URL + "api/comments/" + commentId, {
+method: "DELETE",
+headers: {
+"x-access-token": user.token,
+},
+});
+return res.json();
+} catch (err) {
+console.log(err);
+}
+};
+const likePost = async (postId, user) => {
+try {
+const res = await fetch(BASE_URL + "api/posts/like/" + postId, {
+method: "POST",
+headers: {
+"x-access-token": user.token,
+},
+});
+return res.json();
+} catch (err) {
+console.log(err);
+}
+};
+const unlikePost = async (postId, user) => {
+try {
+const res = await fetch(BASE_URL + "api/posts/like/" + postId, {
+method: "DELETE",
+headers: {
+"x-access-token": user.token,
+},
+});
+return res.json();
+} catch (err) {
+console.log(err);
+}
+};
