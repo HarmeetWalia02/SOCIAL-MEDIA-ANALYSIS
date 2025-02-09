@@ -1,0 +1,43 @@
+Attributes:
+User:
+UserID: Unique identifier for each user.
+Username: User's chosen username or handle.
+Email: User's email address.
+Role: User's role on the platform (e.g., regular user, administrator).
+ProfilePicture: Image representing the user's profile.
+Bio: Brief description or biography provided by the user.
+2
+Post:
+PostID: Unique identifier for each post.
+Content: Text, image, video, or link shared by the user.
+Timestamp: Date and time when the post was created.
+Likes: Number of likes received by the post.
+Comments: Number of comments posted on the post.
+Shares: Number of times the post has been shared.
+Comment:
+CommentID: Unique identifier for each comment.
+Content: Text of the comment.
+Timestamp: Date and time when the comment was posted.
+UserID: Foreign key referencing the user who posted the comment.
+PostID: Foreign key referencing the post the comment is associated with.
+Like:
+LikeID: Unique identifier for each like.
+UserID: Foreign key referencing the user who liked the post.
+PostID: Foreign key referencing the post that was liked.
+Share:
+ShareID: Unique identifier for each share.
+UserID: Foreign key referencing the user who shared the post.
+PostID: Foreign key referencing the post that was shared.
+Hashtag:
+HashtagID: Unique identifier for each hashtag.
+Tag: Text of the hashtag.
+Follow:
+FollowID: Unique identifier for each follow relationship.
+FollowerID: Foreign key referencing the user who is following.
+FollowingID: Foreign key referencing the user who is being followed.
+Message:
+MessageID: Unique identifier for each message.
+Content: Text of the message.
+Timestamp: Date and time when the message was sent.
+SenderID: Foreign key referencing the user who sent the message.
+RecipientID: Foreign key referencing the user who received the message.
